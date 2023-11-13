@@ -8,6 +8,52 @@ import requests
 
 st.title('Расчет динамики частицы в оптическом пинцете')
 #
+st.header('Выбор параметров системы')
+#Размер перетяжки 1, 0.5, 0.25 длины волны
+waist = st.radio(
+    "Размер перетяжки в "+r'$\lambda$',
+    [1, 0.5, 0.25],
+    index=None, 
+    horizontal=True,
+)
+
+st.write("You selected:", waist)
+#Размер частицы 0.05, 0.1, 0.2, 0.5 длины волны
+radius = st.radio(
+    "Размер частицы",
+    [0.05, 0.1, 0.2, 0.5],
+    index=None,
+    horizontal=True,
+)
+
+st.write("You selected:", radius)
+#Контраст n частицы/n окружения 1.2, 2.1, 3, 3.9
+contrast = st.radio(
+    "Контраст n частицы/n окружения",
+    [1.2, 2.1, 3, 3.9],
+    index=None,
+    horizontal=True,
+)
+
+st.write("You selected:", contrast)
+df = pd.DataFrame({
+    'first column': [1, 2, 3, 4],
+    'second column': [10, 20, 30, 40]
+    })
+
+option = st.selectbox(
+    'System №',
+     df['first column'])
+
+'You selected: ', option
+#response
+res = requests.get(f'http://127.0.0.1:8000/{str(option)}')
+st.write(res.text)
+
+res = requests.get(f'http://127.0.0.1:8000/waist{waist}/radius{radius}/contrast{contrast}')
+st.write(res.text)
+
+#
 st.header('Выбор начальных координат')
 x0 = st.slider('x',  min_value=-1.0, max_value=1.0, value = 1.0, step=0.1)  # 👈 this is a widget
 z0 = st.slider('z',  min_value=-300, max_value=300, value = 100, step=1)  # 👈 this is a widget
@@ -18,22 +64,6 @@ st.write('x0 =', x0,'z0 = ', z0)
 number_x = st.number_input('enter the x coordinate', min_value=-100, max_value=100, value = 50)
 number_z = st.number_input('enter the z coordinate', min_value=-100, max_value=100, value = 50)
 st.write('x = ', number_x, 'z = ', number_z)
-
-#
-st.header('Выбор параметров системы')
-df = pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-    })
-
-option = st.selectbox(
-    'Which number do you like best?',
-     df['first column'])
-
-'You selected: ', option
-#response
-res = requests.get(f'http://127.0.0.1:8000/{str(option)}')
-st.write(res.text)
 
 #start
 if st.button('Start'):
