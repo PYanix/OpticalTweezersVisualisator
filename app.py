@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import math
 import requests
+from scipy.interpolate import RegularGridInterpolator
+from PIL import Image
 
 st.title('Расчет динамики частицы в оптическом пинцете')
 #
@@ -13,141 +15,194 @@ st.header('Выбор параметров системы')
 waist = st.radio(
     "Размер перетяжки в "+r'$\lambda$',
     [1, 0.5, 0.25],
-    index=None, 
+    index=0, 
     horizontal=True,
 )
-
-st.write("You selected:", waist)
 #Размер частицы 0.05, 0.1, 0.2, 0.5 длины волны
 radius = st.radio(
-    "Размер частицы",
+    "Размер частицы (радиус)",
     [0.05, 0.1, 0.2, 0.5],
-    index=None,
+    index=0,
     horizontal=True,
 )
 
-st.write("You selected:", radius)
 #Контраст n частицы/n окружения 1.2, 2.1, 3, 3.9
 contrast = st.radio(
-    "Контраст n частицы/n окружения",
+    "Контраст "+r'$\frac{n_{particle}}{n_{medium}}$',
     [1.2, 2.1, 3, 3.9],
-    index=None,
+    index=0,
     horizontal=True,
 )
 
-st.write("You selected:", contrast)
-df = pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-    })
-
-option = st.selectbox(
-    'System №',
-     df['first column'])
-
-'You selected: ', option
 #response
-res = requests.get(f'http://127.0.0.1:8000/{str(option)}')
-st.write(res.text)
 
 res = requests.get(f'http://127.0.0.1:8000/waist{waist}/radius{radius}/contrast{contrast}')
 st.write(res.text)
+data = res.json()
+st.write(data)
+#
+R = 0.1 * 532 *10**(-9)    #радиус частицы
+density = 1.96 * 1000  #плотность
+m = 4*R**3/3*density*math.pi
+k_ci = 1.33*3.3966*10**-26    # коэфф размерности для силы
 
+force = np.random.rand(4, 4)
+proj = ''
+raz_z = 3000
+raz_x = 1500
+period = 10
+first_koor = 0
+table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
+table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
+
+def massive(x, z, proj):
+    x1 = int(x*1000000000 // period + raz_x // period) - 1
+    z1 = int(z*1000000000 // period + raz_z // period) - 1
+    if proj == 'x':
+        for i in range(4):
+            for j in range(4):
+                force[i][j] = table_x[i + x1][j + z1]
+    elif proj == 'z':
+        for i in range(4):
+            for j in range(4):
+                force[i][j] = table_z[i + x1][j + z1]
+
+def F(x, z, projection):
+    x_arr = [(x * 1000000000 // period * period + first_koor) * 0.000000001 - period * 0.000000001,
+            (x * 1000000000 // period * period + first_koor) * 0.000000001,
+            (x * 1000000000 // period * period + first_koor) * 0.000000001 + period * 0.000000001,
+            (x * 1000000000 // period * period + first_koor) * 0.000000001 + 2 * period * 0.000000001]
+    z_arr = [z * 1000000000 // period * period * 0.000000001 - period * 0.000000001,
+            z * 1000000000 // period * period * 0.000000001,
+            z * 1000000000 // period * period * 0.000000001 + period * 0.000000001,
+            z * 1000000000 // period * period * 0.000000001 + 2 * period * 0.000000001]
+
+    massive(x, z, projection)
+    interp = RegularGridInterpolator((x_arr, z_arr), force, method='cubic')
+    return interp((x, z))*k_ci
+arr_z = []
+arr_Fz = []
+s0=10**(-9)
+for i in range(-2900, 2900, 10):
+    arr_Fz.append(F(s0*0.001, s0*i, 'z'))
+    arr_z.append(s0*i)
+    print(i)
+print(F(s0*300, -s0*1100, 'z'))
+fig, ax = plt.subplots()
+ax.plot(arr_z, arr_Fz, 'black')
+ax.plot([-3000*s0, 3000*s0], [0, 0])
+ax.set_ylabel('Fz, Н')
+ax.set_xlabel('z, м')
+st.pyplot(fig)
 #
 st.header('Выбор начальных координат')
-x0 = st.slider('x',  min_value=-1.0, max_value=1.0, value = 1.0, step=0.1)  # 👈 this is a widget
-z0 = st.slider('z',  min_value=-300, max_value=300, value = 100, step=1)  # 👈 this is a widget
+x0 = st.slider('x',  min_value=-1500, max_value=1500, value = 300, step=1)  # 👈 this is a widget
+z0 = st.slider('z',  min_value=-3000, max_value=3000, value = -1100, step=1)  # 👈 this is a widget
 st.write('x0 =', x0,'z0 = ', z0)
 
 #or 
 
-number_x = st.number_input('enter the x coordinate', min_value=-100, max_value=100, value = 50)
-number_z = st.number_input('enter the z coordinate', min_value=-100, max_value=100, value = 50)
-st.write('x = ', number_x, 'z = ', number_z)
+#number_x = st.number_input('enter the x coordinate', min_value=-100, max_value=100, value = 50)
+#number_z = st.number_input('enter the z coordinate', min_value=-100, max_value=100, value = 50)
+#st.write('x = ', number_x, 'z = ', number_z)
 
 #start
 if st.button('Start'):
-    st.write('begin to do smth')
     st.write(f'x={x0}')
-    st.write(f'Sistem № {option}')
+    col1, col2 = st.columns([1, 1])
 
-    arr = np.random.normal(1, 1, size=100)
-    fig, ax = plt.subplots()
-    ax.hist(arr, bins=20)
-
-    st.pyplot(fig)
-
-    # Generate curve data
-    k_x = 4
-    k_y = 9
-    m = 1
-    omega_x = (k_x/m)**0.5
-    omega_y = (k_y/m)**0.5
-    omega = math.sqrt(k_x / m)
-
-
-    # задание силы F от координаты
-    def F_x(x):
-        return -k_x * x
-
-    def F_y(y):
-        return -k_y * y
-
-
+    col1.subheader("first graf")
+    col2.subheader("second graf")
+    # картинка с фоном
+    R = 0.1 * 532 *10**(-9)    #радиус частицы
+    density = 1.96 * 1000  #плотность
+    m = 4*R**3/3*density*math.pi
+    k_ci = 1.33*3.3966*10**-26    # коэфф размерности для силы
     # начальные условия
-    #x0 = 1 #math.cos(0)
-    v0_x = 1 #-omega_x*math.sin(0)
-    y0 = 0.5 #math.cos(math.pi/1)
-    v0_y = -omega_y*math.sin(math.pi/1)
-    Tmax = 2 * math.pi / omega
-    A = x0
-    B = v0_x / omega
+    x0 = x0 * 10**-9
+    v0_x = 0
+
+    z0 = 10**-9 * z0
+    v0_z = 0
+
+    Tmax = 10000
+    dt = 1 / 1
 
     # velocity-Verle method
 
     x = x0
-    y = y0
     v_x = v0_x
     v2_x = 0
-    v_y = v0_y
-    v2_y = 0
-    dt = Tmax / 1000
-    t = dt
     arr_x = [x0]
     arr_v_x = [v0_x]
-    arr_y = [y0]
-    arr_v_y = [v0_y]
+
+    z = z0
+    v_z = v0_z
+    v2_z = 0
+    arr_z = [z0]
+    arr_v_z = [v0_z]
+
+    t = dt
     arr_t = [0]
+    
+    while t < 5000 * dt:
+        try:
+            for _ in range(1):  # частота запоминания x, v с периодичностью...
 
-    while t < 100 * Tmax:
-        for _ in range(5):  # частота запоминания x, v с периодичностью...
-            v2_x = v_x + dt / 2 * F_x(x) / m
-            x = x + dt * v2_x
-            v_x = v2_x + dt / 2 * F_x(x) / m
 
-            v2_y = v_y + dt / 2 * F_y(y) / m
-            y = y + dt * v2_y
-            v_y = v2_y + dt / 2 * F_y(y) / m
+                v2_x = v_x + dt / 2 * F(x, z, 'x') / m
+                v2_z = v_z + dt / 2 * F(x, z, 'z') / m
+                print(v2_x)
 
-            t += dt
-        arr_x.append(x)
-        arr_v_x.append(v_x)
-        arr_y.append(y)
-        arr_v_y.append(v_y)
-        arr_t.append(t)
+                x = x + dt * v2_x
+                z = z + dt * v2_z
+
+                v_x = v2_x + dt / 2 * F(x, z, 'x') / m
+                v_z = v2_z + dt / 2 * F(x, z, 'z') / m
+
+                t += dt
+
+            arr_x.append(x)
+            arr_v_x.append(v_x)
+            arr_z.append(z)
+            arr_v_z.append(v_z)
+            arr_t.append(t)
+            
+        except:
+            break
+        
+
+
+    #plt.figure()
+    #ax = plt.axes()
+    fig, ax = plt.subplots()
+    img = Image.open('C:/Users/yana5/PycharmProjects/pythonProject/pictures/пучок_1.jfif')
+
+    ax.plot(arr_x, arr_z)#, 'green')
+    ax.scatter(x0, z0, color = 'green', label = 'точка старта')     #точка старта
+    ax.scatter(0, 0, color = 'black')       # начало координат
+
+    ax.scatter(x, z, color = 'red')   #конечная точка
+
+    plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
+    plt.xlabel("x")
+    plt.ylabel("z")
+    plt.legend(loc=1)
+
+    col1.pyplot(fig)
+
+    # Generate curve data
+
 
 
     t = arr_t
     x = arr_x
-    y = arr_y
-    xm = np.min(x) - 1.5
-    xM = np.max(x) + 1.5
-    ym = np.min(y) - 1.5
-    yM = np.max(y) + 1.5
-    N = 50
-    s = np.linspace(-1, 1, N)
-    xx = s + s ** 2
-    yy = s - s ** 2
+    y = arr_z
+    xm = -1.5*10**(-6)
+    xM = 1.5*10**(-6)
+    ym = -4*10**(-6) 
+    yM = 4*10**(-6) 
+    N = 1000
 
 
     # Create figure
@@ -169,13 +224,14 @@ if st.button('Start'):
         frames=[go.Frame(
             data=[go.Scatter(
                 x=[arr_x[k]],
-                y=[arr_y[k]],
+                y=[arr_z[k]],
                 mode="markers",
                 marker=dict(color="red", size=10))])
 
-            for k in range(0, N, 4)]
+            for k in range(0, len(arr_x), 50)]
     )
 
     #fig.show()
-    st.write(fig)
+    col2.write(fig)
+    
 
