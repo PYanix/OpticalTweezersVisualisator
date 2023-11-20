@@ -22,6 +22,7 @@ async def R100nmFY():
 async def R100nmFZ():
     return FileResponse("C:/Users/yana5/PycharmProjects/pythonProject/trying/arr_Fz.json")
 ###############################################3
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -41,7 +42,9 @@ def read_four():
 
 @app.get("/waist1/radius0.05/contrast1.2")
 def get_waist_1_radius_0_05_contrast_1_2():
-    return [1, 0.05, 1.2]
+    table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.05/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.05/Fz.txt').readlines()]
+    return table_x, table_z
 
 @app.get("/waist1/radius0.05/contrast2.1")
 def get_waist_1_radius_0_05_contrast_2_1():
@@ -57,7 +60,9 @@ def get_waist_1_radius_0_05_contrast_3_9():
 
 @app.get("/waist1/radius0.1/contrast1.2")
 def get_waist_1_radius_0_1_contrast_1_2():
-    return [1, 0.1, 1.2]
+    table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
+    return table_x, table_z
 
 @app.get("/waist1/radius0.1/contrast2.1")
 def get_waist_1_radius_0_1_contrast_2_1():
