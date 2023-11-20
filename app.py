@@ -37,14 +37,16 @@ contrast = st.radio(
 #response
 
 res = requests.get(f'http://127.0.0.1:8000/waist{waist}/radius{radius}/contrast{contrast}')
-st.write(res.text)
+#st.write(res.text)
 data = res.json()
-st.write(data)
-#
-R = 0.1 * 532 *10**(-9)    #радиус частицы
-density = 1.96 * 1000  #плотность
-m = 4*R**3/3*density*math.pi
-k_ci = 1.33*3.3966*10**-26    # коэфф размерности для силы
+table_x = data[0]
+table_z = data[1]
+
+# Интерполяция
+R = radius * 532 *10**(-9)      # радиус частицы
+density = 1.96 * 1000           # плотность
+m = 4*R**3/3*density*math.pi    # масса частицы
+k_ci = 1.33*3.3966*10**-26      # коэфф размерности для силы
 
 force = np.random.rand(4, 4)
 proj = ''
@@ -52,8 +54,6 @@ raz_z = 3000
 raz_x = 1500
 period = 10
 first_koor = 0
-table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
-table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
 
 def massive(x, z, proj):
     x1 = int(x*1000000000 // period + raz_x // period) - 1
@@ -95,10 +95,9 @@ ax.set_ylabel('Fz, Н')
 ax.set_xlabel('z, м')
 st.pyplot(fig)
 #
-st.header('Выбор начальных координат')
-x0 = st.slider('x',  min_value=-1500, max_value=1500, value = 300, step=1)  # 👈 this is a widget
-z0 = st.slider('z',  min_value=-3000, max_value=3000, value = -1100, step=1)  # 👈 this is a widget
-st.write('x0 =', x0,'z0 = ', z0)
+st.header('Выбор начальных координат') # слайдеры выбора начальных координат
+x0 = st.slider('x',  min_value=-1500, max_value=1500, value = 300, step=1) 
+z0 = st.slider('z',  min_value=-3000, max_value=3000, value = -1100, step=1)  
 
 #or 
 
@@ -108,16 +107,14 @@ st.write('x0 =', x0,'z0 = ', z0)
 
 #start
 if st.button('Start'):
-    st.write(f'x={x0}')
-    col1, col2 = st.columns([1, 1])
+    
+    # расчет массива координат траектории
+    
+    R = radius * 532 *10**(-9)         # радиус частицы
+    density = 1.96 * 1000           # плотность
+    m = 4*R**3/3*density*math.pi    # масса частицы
+    k_ci = 1.33*3.3966*10**-26      # коэфф размерности для силы
 
-    col1.subheader("first graf")
-    col2.subheader("second graf")
-    # картинка с фоном
-    R = 0.1 * 532 *10**(-9)    #радиус частицы
-    density = 1.96 * 1000  #плотность
-    m = 4*R**3/3*density*math.pi
-    k_ci = 1.33*3.3966*10**-26    # коэфф размерности для силы
     # начальные условия
     x0 = x0 * 10**-9
     v0_x = 0
@@ -170,19 +167,19 @@ if st.button('Start'):
             
         except:
             break
-        
+    # отрисовка графиков
+    col1, col2 = st.columns([1, 1])
+    col1.subheader("trajectory")
+    col2.subheader("animated trajectory")    
+    # картинка с фоном
 
-
-    #plt.figure()
-    #ax = plt.axes()
     fig, ax = plt.subplots()
     img = Image.open('C:/Users/yana5/PycharmProjects/pythonProject/pictures/пучок_1.jfif')
 
-    ax.plot(arr_x, arr_z)#, 'green')
+    ax.plot(arr_x, arr_z, 'green')           #кривая траектории
     ax.scatter(x0, z0, color = 'green', label = 'точка старта')     #точка старта
-    ax.scatter(0, 0, color = 'black')       # начало координат
-
-    ax.scatter(x, z, color = 'red')   #конечная точка
+    ax.scatter(0, 0, color = 'black')#, label = 'начало координат')       # начало координат
+    ax.scatter(x, z, color = 'red')#, label = 'конечная точка')   #конечная точка
 
     plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
     plt.xlabel("x")
@@ -191,21 +188,16 @@ if st.button('Start'):
 
     col1.pyplot(fig)
 
-    # Generate curve data
-
-
-
-    t = arr_t
+    # данные для построения анимированного графика
     x = arr_x
     y = arr_z
+    # минимальные и максимальные значения на осях
     xm = -1.5*10**(-6)
     xM = 1.5*10**(-6)
     ym = -4*10**(-6) 
     yM = 4*10**(-6) 
-    N = 1000
 
-
-    # Create figure
+    # отрисовка анимированного графика
     fig = go.Figure(
         data=[go.Scatter(x=x, y=y,
                         mode="lines",
@@ -230,8 +222,5 @@ if st.button('Start'):
 
             for k in range(0, len(arr_x), 50)]
     )
-
-    #fig.show()
     col2.write(fig)
     
-
