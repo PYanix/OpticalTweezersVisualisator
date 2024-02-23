@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+#import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -98,7 +98,7 @@ st.pyplot(fig)
 st.header('Выбор начальных координат') # слайдеры выбора начальных координат
 x0 = st.slider('x',  min_value=-1500, max_value=1500, value = 300, step=1) 
 z0 = st.slider('z',  min_value=-3000, max_value=3000, value = -1100, step=1)  
-
+iterations = st.slider('количество итераций',  min_value=1000, max_value=10000, value = 1000, step=500)
 #or 
 
 #number_x = st.number_input('enter the x coordinate', min_value=-100, max_value=100, value = 50)
@@ -106,7 +106,7 @@ z0 = st.slider('z',  min_value=-3000, max_value=3000, value = -1100, step=1)
 #st.write('x = ', number_x, 'z = ', number_z)
 
 #start
-if st.button('Start'):
+if st.button('Старт'):
     
     # расчет массива координат траектории
     
@@ -142,7 +142,7 @@ if st.button('Start'):
     t = dt
     arr_t = [0]
     
-    while t < 5000 * dt:
+    while t < iterations * dt:
         try:
             for _ in range(1):  # частота запоминания x, v с периодичностью...
 
@@ -169,19 +169,19 @@ if st.button('Start'):
             break
     # отрисовка графиков
     col1, col2 = st.columns([1, 1])
-    col1.subheader("trajectory")
-    col2.subheader("animated trajectory")    
+    col1.subheader("траектория")
+    col2.subheader("анимированная траектория")
     # картинка с фоном
 
     fig, ax = plt.subplots()
-    img = Image.open('C:/Users/yana5/PycharmProjects/pythonProject/pictures/пучок_1.jfif')
+    #img = Image.open('C:/Users/yana5/PycharmProjects/pythonProject/pictures/пучок_1.jfif')
 
     ax.plot(arr_x, arr_z, 'green')           #кривая траектории
     ax.scatter(x0, z0, color = 'green', label = 'точка старта')     #точка старта
     ax.scatter(0, 0, color = 'black')#, label = 'начало координат')       # начало координат
     ax.scatter(x, z, color = 'red')#, label = 'конечная точка')   #конечная точка
 
-    plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
+    #plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
     plt.xlabel("x")
     plt.ylabel("z")
     plt.legend(loc=1)
@@ -208,7 +208,7 @@ if st.button('Start'):
         layout=go.Layout(
             xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
             yaxis=dict(range=[ym, yM], autorange=False, zeroline=False),
-            title_text="Kinematic Generation of a Planar Curve", hovermode="closest",
+            title_text="Анимированная траектория", hovermode="closest",
             updatemenus=[dict(type="buttons",
                             buttons=[dict(label="Play",
                                             method="animate",
