@@ -4,8 +4,8 @@ app = FastAPI()
 
 @app.get("/waist1/radius0.05/contrast1.2")
 def get_waist_1_radius_0_05_contrast_1_2():
-    table_x = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.05/Fx.txt').readlines()]
-    table_z = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.05/Fz.txt').readlines()]
+    table_x = [i.split() for i in open(f'Force site/waist5.32e-07contrast1.2size0.05/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'Force site/waist5.32e-07contrast1.2size0.05/Fz.txt').readlines()]
     return table_x, table_z
 
 @app.get("/waist1/radius0.05/contrast2.1")
@@ -22,8 +22,8 @@ def get_waist_1_radius_0_05_contrast_3_9():
 
 @app.get("/waist1/radius0.1/contrast1.2")
 def get_waist_1_radius_0_1_contrast_1_2():
-    table_x = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
-    table_z = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
+    table_x = [i.split() for i in open(f'Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
     return table_x, table_z
 
 @app.get("/waist1/radius0.1/contrast2.1")

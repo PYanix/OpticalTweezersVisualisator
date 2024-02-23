@@ -174,14 +174,14 @@ if st.button('Старт'):
     # картинка с фоном
 
     fig, ax = plt.subplots()
-    #img = Image.open('C:/Users/yana5/PycharmProjects/pythonProject/pictures/пучок_1.jfif')
+    img = Image.open('pictures/пучок_1.jpg')
 
     ax.plot(arr_x, arr_z, 'green')           #кривая траектории
     ax.scatter(x0, z0, color = 'green', label = 'точка старта')     #точка старта
     ax.scatter(0, 0, color = 'black')#, label = 'начало координат')       # начало координат
     ax.scatter(x, z, color = 'red')#, label = 'конечная точка')   #конечная точка
 
-    #plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
+    plt.imshow(img, cmap='gray', aspect=0.5, alpha=0.7,extent=[-1.5*10**-6, 1.5*10**-6, -4*10**-6, 4*10**-6])
     plt.xlabel("x")
     plt.ylabel("z")
     plt.legend(loc=1)
@@ -208,7 +208,7 @@ if st.button('Старт'):
         layout=go.Layout(
             xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
             yaxis=dict(range=[ym, yM], autorange=False, zeroline=False),
-            title_text="Анимированная траектория", hovermode="closest",
+            title_text="", hovermode="closest",
             updatemenus=[dict(type="buttons",
                             buttons=[dict(label="Play",
                                             method="animate",
