@@ -1,49 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI
 
 app = FastAPI()
 
-#@app.get("/items/{item_id}")
-#def read_item(item_id: int, q: Union[str, None] = None):
-#    return {"item_id": item_id, "q": q}
-
-# Массивы сил для R = 100 nm
-
-#some_file_path = "C:/Users/yana5/PycharmProjects/pythonProject/trying/arr_Fx.json"
-@app.get("/R100nmFX")
-async def R100nmFX():
-    return FileResponse("C:/Users/yana5/PycharmProjects/pythonProject/trying/arr_Fx.json")
-
-@app.get("/R100nmFY")
-async def R100nmFY():
-    return FileResponse("C:/Users/yana5/PycharmProjects/pythonProject/trying/arr_Fy.json")
-
-@app.get("/R100nmFZ")
-async def R100nmFZ():
-    return FileResponse("C:/Users/yana5/PycharmProjects/pythonProject/trying/arr_Fz.json")
-###############################################3
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-@app.get("/1")
-def read_one():
-    return ['система 1 тут будут два массива для Fx Fz']
-@app.get("/2")
-def read_two():
-    return [2,2,2,4,5,6,7,8]
-@app.get("/3")
-def read_three():
-    return [3,3,1,4,5,6,7,8]
-@app.get("/4")
-def read_four():
-    return [4,4,1,4,5,6,7,8]
-
 @app.get("/waist1/radius0.05/contrast1.2")
 def get_waist_1_radius_0_05_contrast_1_2():
-    table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.05/Fx.txt').readlines()]
-    table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.05/Fz.txt').readlines()]
+    table_x = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.05/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.05/Fz.txt').readlines()]
     return table_x, table_z
 
 @app.get("/waist1/radius0.05/contrast2.1")
@@ -60,8 +22,8 @@ def get_waist_1_radius_0_05_contrast_3_9():
 
 @app.get("/waist1/radius0.1/contrast1.2")
 def get_waist_1_radius_0_1_contrast_1_2():
-    table_x = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
-    table_z = [i.split() for i in open(f'C:/Users/yana5/Documents/Яна/практика/сайт/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
+    table_x = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.1/Fx.txt').readlines()]
+    table_z = [i.split() for i in open(f'C:/Users/yana5/OneDrive/Документы/ИТМО/оптический пинцет/Force site/waist5.32e-07contrast1.2size0.1/Fz.txt').readlines()]
     return table_x, table_z
 
 @app.get("/waist1/radius0.1/contrast2.1")
