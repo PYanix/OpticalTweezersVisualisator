@@ -12,12 +12,11 @@ img = Image.open("pictures/инструкция зеленый.jpg")
 st.title('Расчет динамики частицы в оптическом пинцете')
 col1, col2 = st.columns(2)
 with col1:
-
     st.header('Выбор параметров системы')
     # Размер перетяжки 1, 0.5, 0.25 длины волны
     waist = st.radio(
         "Размер перетяжки в длинах волн",
-        [1, 0.5, 0.25],
+        [1, 0.75, 0.49, 0.4],
         index=0,
         horizontal=True,
     )
@@ -28,7 +27,6 @@ with col1:
         index=0,
         horizontal=True,
     )
-
     # Контраст n частицы/n окружения 1.2, 2.1, 3, 3.9
     contrast = st.radio(
         "Контраст " + r'$\frac{n_{2}}{n_{1}}$',
@@ -38,9 +36,13 @@ with col1:
     )
 with col2:
     st.image(img)
-# response
 
-res = requests.get(f'http://127.0.0.1:8000/waist{waist}/radius{radius}/contrast{contrast}')
+# response
+waist_dict = {1: 'waist5.32e-07',
+              0.75: 'waist4.0303e-07',
+              0.49: 'waist2.5961e-07',
+              0.4: 'waist2.1635e-07'}
+res = requests.get(f'http://127.0.0.1:8000/{waist_dict[waist]}/contrast{contrast}/radius{radius}')
 data = res.json()
 table_x = data[0]
 table_z = data[1]
@@ -113,7 +115,7 @@ col1, col2 = st.columns(2)
 with col1:
     x0 = st.slider('Начальная координата по x, нм', min_value=-1500, max_value=1500, value=300, step=1)
     z0 = st.slider('Начальная координата по z, нм', min_value=-3000, max_value=3000, value=-1100, step=1)
-    dyn_viscosity= st.slider('Динамическая вязкость', min_value=0.05, max_value=0.5, value=0.0, step=0.05)*10**-6 ##динамическая вязкость
+    dyn_viscosity = st.slider('Динамическая вязкость', min_value=0.05, max_value=0.5, value=0.0, step=0.01)*10**-6 ##динамическая вязкость
 with col2:
     iterations = st.slider('Количество итераций', min_value=500, max_value=10000, value=500, step=500)
     dt = st.slider('Шаг по времени, 10^-8 с', min_value=1, max_value=100, value=1, step=1)*10**-8
