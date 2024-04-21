@@ -6,6 +6,7 @@ import math
 import requests
 from scipy.interpolate import RegularGridInterpolator
 from PIL import Image
+from io import StringIO
 
 img = Image.open("pictures/инструкция зеленый.jpg")
 
@@ -34,19 +35,39 @@ with col1:
         index=0,
         horizontal=True,
     )
+    # response
+    waist_dict = {1: 'waist5.32e-07',
+                  0.75: 'waist4.0303e-07',
+                  0.49: 'waist2.5961e-07',
+                  0.4: 'waist2.1635e-07'}
+    res = requests.get(f'http://127.0.0.1:8000/{waist_dict[waist]}/contrast{contrast}/radius{radius}')
+    data = res.json()
+    table_x = data[0]
+    table_z = data[1]
+
 with col2:
     st.image(img)
 
-# response
-waist_dict = {1: 'waist5.32e-07',
-              0.75: 'waist4.0303e-07',
-              0.49: 'waist2.5961e-07',
-              0.4: 'waist2.1635e-07'}
-res = requests.get(f'http://127.0.0.1:8000/{waist_dict[waist]}/contrast{contrast}/radius{radius}')
-data = res.json()
-table_x = data[0]
-table_z = data[1]
-
+# свои массивы сил
+st.header("Загрузить свои массивы сил")
+flag_uploaded_files = ''
+col3, col4 = st.columns(2)
+with col3:
+    uploaded_file = st.file_uploader("Выберите файл для силы Fx")
+    if uploaded_file is not None:
+        # To convert to a string based IO:
+        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+        # To read file as string:
+        string_data = stringio.read()
+        table_x = [i.split('\t') for i in string_data.split('\n')]
+        flag_uploaded_files += 'x'
+with col4:
+    uploaded_file = st.file_uploader("Выберите файл для силы Fz")
+    if uploaded_file is not None:
+        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+        string_data = stringio.read()
+        table_z = [i.split('\t') for i in string_data.split('\n')]
+        flag_uploaded_files += 'z'
 # Интерполяция
 
 force = np.random.rand(4, 4)
@@ -118,106 +139,129 @@ with col1:
     dyn_viscosity = st.slider('Динамическая вязкость', min_value=0.05, max_value=0.5, value=0.0, step=0.01)*10**-6 ##динамическая вязкость
 with col2:
     iterations = st.slider('Количество итераций', min_value=500, max_value=10000, value=500, step=500)
-    dt = st.slider('Шаг по времени, 10^-8 с', min_value=1, max_value=100, value=1, step=1)*10**-8
+    dt = st.slider('Шаг по времени, 10^-8 с', min_value=1, max_value=50, value=1, step=1)*10**-8
     p = st.slider('Мощность, Вт', min_value=0.05, max_value=1.0, value=1.0, step=0.05)
 
 # start
+
 if st.button('Старт'):
-    progress_text = "Идет расчет траектории. Пожалуйста подождите."
-    my_bar = st.progress(0, text=progress_text)
+    if flag_uploaded_files != '' and flag_uploaded_files != 'xz':
+        st.write('Пока нельзя рассчитать траекторию, пожалуйста загрузите все необходимые файлы')
+    else:
+        progress_text = "Идет расчет траектории. Пожалуйста подождите."
+        my_bar = st.progress(0, text=progress_text)
 
-    # расчет массива координат траектории
-    wave_len = 532 *10**(-9)
-    R = radius * wave_len  # радиус частицы
-    density = 1.96 * 1000  # плотность
-    m = 4 * R ** 3 / 3 * density * math.pi  # масса частицы
-    k_ci = k_ci*p  # коэфф размерности для силы
-    k_liq = 6 * math.pi * R * dyn_viscosity  # F=k*v - сила сопротивления
+        # расчет массива координат траектории
+        wave_len = 532 *10**(-9)
+        R = radius * wave_len  # радиус частицы
+        density = 1.96 * 1000  # плотность
+        m = 4 * R ** 3 / 3 * density * math.pi  # масса частицы
+        k_ci = k_ci*p  # коэфф размерности для силы
+        k_liq = 6 * math.pi * R * dyn_viscosity  # F=k*v - сила сопротивления
 
-    # начальные условия
-    x0 = x0 * 10 ** -9
-    v0_x = 0
+        # начальные условия
+        x0 = x0 * 10 ** -9
+        v0_x = 0
 
-    z0 = z0 * 10 ** -9
-    v0_z = 0
+        z0 = z0 * 10 ** -9
+        v0_z = 0
 
-    # velocity-Verle method
-    x = x0
-    v_x = v0_x
-    v2_x = 0
-    arr_x = [x0]
+        # velocity-Verle method
+        x = x0
+        v_x = v0_x
+        v2_x = 0
+        arr_x = [x0]
 
-    z = z0
-    v_z = v0_z
-    v2_z = 0
-    arr_z = [z0]
+        z = z0
+        v_z = v0_z
+        v2_z = 0
+        arr_z = [z0]
 
-    t = dt
-    t_end = iterations * dt
+        t = dt
+        t_end = iterations * dt
 
-    while t < t_end:
-        try:
-            v2_x = v_x + dt / 2 * (F(x, z, 'x') - v_x * k_liq) / m
-            v2_z = v_z + dt / 2 * (F(x, z, 'z') - v_z * k_liq) / m
+        while t < t_end:
+            try:
+                v2_x = v_x + dt / 2 * (F(x, z, 'x') - v_x * k_liq) / m
+                v2_z = v_z + dt / 2 * (F(x, z, 'z') - v_z * k_liq) / m
 
-            x = x + dt * v2_x
-            z = z + dt * v2_z
+                x = x + dt * v2_x
+                z = z + dt * v2_z
 
-            v_x = v2_x + dt / 2 * (F(x, z, 'x') - v2_x * k_liq) / m
-            v_z = v2_z + dt / 2 * (F(x, z, 'z') - v2_z * k_liq) / m
+                v_x = v2_x + dt / 2 * (F(x, z, 'x') - v2_x * k_liq) / m
+                v_z = v2_z + dt / 2 * (F(x, z, 'z') - v2_z * k_liq) / m
 
-            t += dt
+                t += dt
 
-            arr_x.append(x)
-            arr_z.append(z)
-            my_bar.progress(t/t_end, text=progress_text)
+                arr_x.append(x)
+                arr_z.append(z)
+                my_bar.progress(t/t_end, text=progress_text)
 
-        except:
-            break
+            except:
+                break
 
-    # минимальные и максимальные значения на осях
-    xm = -1.5 * 10 ** (-6)
-    xM = 1.5 * 10 ** (-6)
-    ym = -4 * 10 ** (-6)
-    yM = 4 * 10 ** (-6)
+        # минимальные и максимальные значения на осях
+        xm = -1.5 * 10 ** (-6)
+        xM = 1.5 * 10 ** (-6)
+        ym = -4 * 10 ** (-6)
+        yM = 4 * 10 ** (-6)
 
-    # отрисовка анимированного графика
+        # отрисовка анимированного графика
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    img2 = Image.open("pictures/green.png")
-    fig.add_layout_image(
-        dict(
-            source=img2,
-            xref="x",
-            yref="y",
-            x=-1.5*10**-6,
-            y=4*10**-6,
-            sizex=3*10**-6,
-            sizey=8*10**-6,
-            visible=True,
-            sizing="stretch",
-            opacity=1,
-            layer="below")
-    )
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        img2 = Image.open("pictures/green.png")
+        fig.add_layout_image(
+            dict(
+                source=img2,
+                xref="x",
+                yref="y",
+                x=-1.5*10**-6,
+                y=4*10**-6,
+                sizex=3*10**-6,
+                sizey=8*10**-6,
+                visible=True,
+                sizing="stretch",
+                opacity=1,
+                layer="below")
+        )
 
-    fig.update_xaxes(title_text="x, м")
-    fig.update_yaxes(title_text="z, м", showgrid=False)
-    fig.update_layout(legend_title_text="легенда",
-                      title="Траектория частицы",
-                      showlegend=False,
-                      autosize=False,
-                      xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
-                      yaxis=dict(range=[ym, yM], autorange=False, zeroline=False)
-    )
+        fig.update_xaxes(title_text="x, м")
+        fig.update_yaxes(title_text="z, м", showgrid=False)
+        fig.update_layout(legend_title_text="легенда",
+                          title="Траектория частицы",
+                          showlegend=False,
+                          autosize=False,
+                          xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
+                          yaxis=dict(range=[ym, yM], autorange=False, zeroline=False)
+        )
 
-    #intensity = [i.split() for i in open(f'Force site/field.txt').readlines()] # 801 361
-    # трактория частицы
-    fig.add_trace(go.Scatter(x=arr_x, y=arr_z,
+        #intensity = [i.split() for i in open(f'Force site/field.txt').readlines()] # 801 361
+        # трактория частицы
+        fig.add_trace(go.Scatter(x=arr_x, y=arr_z,
+                                 mode="lines",
+                                 line=dict(width=3, color="white")))
+        # конечное положение частицы
+        fig.add_trace(go.Scatter(x=[arr_x[-1]],
+                                 y=[arr_z[-1]],
+                                 mode="markers",
+                                 marker=dict(
+                                     color='white',
+                                     size=12,
+                                     line=dict(
+                                         color='black',
+                                         width=2
+                                     )
+                                 )))
+        my_bar.empty()  #удаление ползунка загрузки
+        number_frames = 100  #число кадров в гифке
+        frames = [dict(
+            name=k,
+            data=[go.Scatter(x=arr_x[:(k*len(arr_x)//number_frames)],
+                             y=arr_z[:(k*len(arr_z)//number_frames)],
                              mode="lines",
-                             line=dict(width=3, color="white")))
-    # конечное положение частицы
-    fig.add_trace(go.Scatter(x=[arr_x[-1]],
-                             y=[arr_z[-1]],
+                             line=dict(width=3, color="white")),
+                  go.Scatter(x=[arr_x[k * len(arr_x) // number_frames-1]],
+                             y=[arr_z[k * len(arr_z) // number_frames-1]],
                              mode="markers",
                              marker=dict(
                                  color='white',
@@ -226,68 +270,49 @@ if st.button('Старт'):
                                      color='black',
                                      width=2
                                  )
-                             )))
-    my_bar.empty()  #удаление ползунка загрузки
-    number_frames = 100  #число кадров в гифке
-    frames = [dict(
-        name=k,
-        data=[go.Scatter(x=arr_x[:(k*len(arr_x)//number_frames)],
-                         y=arr_z[:(k*len(arr_z)//number_frames)],
-                         mode="lines",
-                         line=dict(width=3, color="white")),
-              go.Scatter(x=[arr_x[k * len(arr_x) // number_frames-1]],
-                         y=[arr_z[k * len(arr_z) // number_frames-1]],
-                         mode="markers",
-                         marker=dict(
-                             color='white',
-                             size=12,
-                             line=dict(
-                                 color='black',
-                                 width=2
                              )
-                         )
-                         )
-              ],
-        traces=[0, 1]
-    ) for k in range(number_frames)]
-    fig.update_layout(width=600, height=700)
+                             )
+                  ],
+            traces=[0, 1]
+        ) for k in range(number_frames)]
+        fig.update_layout(width=600, height=700)
 
-    # Play button
-    updatemenus = [dict(type='buttons',
-                        buttons=[dict(label='Play',
-                                      method='animate',
-                                      args=[[f'{i}' for i in range(number_frames)],
-                                            dict(frame=dict(duration=500, redraw=True),
-                                                 transition=dict(duration=0),
-                                                 easing='linear',
-                                                 fromcurrent=True,
-                                                 mode='immediate'
-                                                 )]),
-                                 dict(label='Pause',
-                                      method='animate',
-                                      args=[[None],
-                                            dict(frame=dict(duration=0, redraw=False),
-                                                 transition=dict(duration=0),
-                                                 mode='immediate'
-                                                 )])
-                                 ],
-                        direction='left',
-                        pad=dict(r=10, t=85),
-                        showactive=True, x=0.1, y=0, xanchor='right', yanchor='top')
-                   ]
+        # Play button
+        updatemenus = [dict(type='buttons',
+                            buttons=[dict(label='Play',
+                                          method='animate',
+                                          args=[[f'{i}' for i in range(number_frames)],
+                                                dict(frame=dict(duration=500, redraw=True),
+                                                     transition=dict(duration=0),
+                                                     easing='linear',
+                                                     fromcurrent=True,
+                                                     mode='immediate'
+                                                     )]),
+                                     dict(label='Pause',
+                                          method='animate',
+                                          args=[[None],
+                                                dict(frame=dict(duration=0, redraw=False),
+                                                     transition=dict(duration=0),
+                                                     mode='immediate'
+                                                     )])
+                                     ],
+                            direction='left',
+                            pad=dict(r=10, t=85),
+                            showactive=True, x=0.1, y=0, xanchor='right', yanchor='top')
+                       ]
 
-    # Slider
-    sliders = [{'yanchor': 'top',
-                'xanchor': 'left',
-                'currentvalue': {'font': {'size': 16}, 'prefix': 'Frame: ', 'visible': True, 'xanchor': 'right'},
-                'transition': {'duration': 0, 'easing': 'linear'},
-                'pad': {'b': 10, 't': 50},
-                'len': 0.9, 'x': 0.1, 'y': 0,
-                'steps': [{'args': [[k], {'frame': {'duration': 0, 'easing': 'linear', 'redraw': False},
-                                          'transition': {'duration': 0, 'easing': 'linear'}}],
-                           'label': k, 'method': 'animate'} for k in range(number_frames)
-                          ]}]
+        # Slider
+        sliders = [{'yanchor': 'top',
+                    'xanchor': 'left',
+                    'currentvalue': {'font': {'size': 16}, 'prefix': 'Frame: ', 'visible': True, 'xanchor': 'right'},
+                    'transition': {'duration': 0, 'easing': 'linear'},
+                    'pad': {'b': 10, 't': 50},
+                    'len': 0.9, 'x': 0.1, 'y': 0,
+                    'steps': [{'args': [[k], {'frame': {'duration': 0, 'easing': 'linear', 'redraw': False},
+                                              'transition': {'duration': 0, 'easing': 'linear'}}],
+                               'label': k, 'method': 'animate'} for k in range(number_frames)
+                              ]}]
 
-    fig.update(frames=frames),
-    fig.update_layout(updatemenus=updatemenus, sliders=sliders, width=600, height=750)
-    st.write(fig)
+        fig.update(frames=frames),
+        fig.update_layout(updatemenus=updatemenus, sliders=sliders, width=600, height=750)
+        st.write(fig)
