@@ -1,0 +1,18 @@
+services:
+  frontend:
+    image: frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    dns:
+      - 1.1.1.1
+    restart: always
+    command: ["py -m streamlit run app.py"]
+  backend:
+    image: frontend
+    dns:
+      - 1.1.1.1
+    restart: always
+    command: ["py -m uvicorn main:app"]
