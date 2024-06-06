@@ -9,4 +9,4 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-CMD [ "python3", "run_some_script_or_commands"]
+CMD [ "python3", "py -m uvicorn main:app --reload", "py -m streamlit run app.py"]
