@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.8-slim-buster
+FROM python:3.11-slim-buster
 
 WORKDIR /
 
@@ -9,4 +9,5 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-CMD [ "python3", "py -m uvicorn main:app --reload", "py -m streamlit run app.py"]
+CMD [ "python3", "-m uvicorn main:app --reload"]
+CMD [ "python3", "-m streamlit run app.py"]
